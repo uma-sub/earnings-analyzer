@@ -507,9 +507,10 @@ if st.sidebar.button("🔍 Analyze Stocks", type="primary"):
                 current_price = row['Current Price']
                 ma_50 = row.get('MA 50')
                 ma_200 = row.get('MA 200')
+                symbol = row['Symbol']
                 
                 display_data.append({
-                    'Symbol': row['Symbol'],
+                    'Symbol': f"https://finance.yahoo.com/quote/{symbol}",
                     'Company': row['Company'],
                     'Earnings Date': row['Earnings Date'].strftime('%Y-%m-%d') if isinstance(row['Earnings Date'], date) else row['Earnings Date'],
                     'Sector': row['Sector'],
@@ -537,25 +538,21 @@ if st.sidebar.button("🔍 Analyze Stocks", type="primary"):
                 use_container_width=True,
                 hide_index=True,
                 column_config={
-                    "Symbol": st.column_config.TextColumn(
+                    "Symbol": st.column_config.LinkColumn(
                         "Symbol",
-                        help="Stock ticker symbol",
+                        help="Click to view on Yahoo Finance",
+                        display_text=r"https://finance\.yahoo\.com/quote/(.*)"
                     )
                 }
             )
             
             # Add legend right after the table
             st.markdown("""
-            **Moving Average Legend:**
+            **Legend:**
             - 🟢 = Stock price is ABOVE the moving average (Bullish signal)
             - 🔴 = Stock price is BELOW the moving average (Bearish signal)
+            - 💡 Click any ticker symbol to view on Yahoo Finance
             """)
-            
-            # Add clickable links for all symbols
-            with st.expander("🔗 Quick Links to Yahoo Finance"):
-                symbols = display_df['Symbol'].tolist()
-                links_html = " | ".join([f'<a href="https://finance.yahoo.com/quote/{symbol}" target="_blank">{symbol}</a>' for symbol in symbols])
-                st.markdown(links_html, unsafe_allow_html=True)
             
             # Add visual indicators using markdown for stocks above MAs
             st.markdown("---")
@@ -592,7 +589,22 @@ if st.sidebar.button("🔍 Analyze Stocks", type="primary"):
             
             if ma_indicators:
                 ma_df = pd.DataFrame(ma_indicators)
-                st.dataframe(ma_df, use_container_width=True, hide_index=True)
+                
+                # Add hyperlinks to symbols in MA summary table
+                ma_df['Symbol'] = ma_df['Symbol'].apply(lambda x: f"https://finance.yahoo.com/quote/{x}")
+                
+                st.dataframe(
+                    ma_df, 
+                    use_container_width=True, 
+                    hide_index=True,
+                    column_config={
+                        "Symbol": st.column_config.LinkColumn(
+                            "Symbol",
+                            help="Click to view on Yahoo Finance",
+                            display_text=r"https://finance\.yahoo\.com/quote/(.*)"
+                        )
+                    }
+                )
                 
                 # Summary stats
                 total_with_ma = len(ma_indicators)
